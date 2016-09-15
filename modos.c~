@@ -104,4 +104,3 @@ double modos()
 	  double phase1 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));
 	  double phase2 = 2*(M_PI)*(rand()/((double)RAND_MAX+1)); 
 }
-
