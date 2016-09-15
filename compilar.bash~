@@ -1,0 +1,3 @@
+#!bin/bash
+
+gcc /home/lgnr/nr_full304/legacy/nr2/C_211/other/nrutil.o /home/lgnr/nr_full304/legacy/nr2/C_211/recipes/bessj0.o /home/lgnr/nr_full304/legacy/nr2/C_211/recipes/bessj.o /home/lgnr/nr_full304/legacy/nr2/C_211/recipes/bessj1.o /home/lgnr/nr_full304/legacy/nr2/C_211/recipes/rkck.o /home/lgnr/nr_full304/legacy/nr2/C_211/recipes/rkqs.o oscilador.c -o oscilador -I/home/lgnr/nr_full304/legacy/nr2/C_211/other -lm
