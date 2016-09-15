@@ -1,5 +1,11 @@
 /* Oscilador armónico bajo la radiación de Punto Cero */
-/* 17 Julio 2014 */
+/* 15 Septiembre 2016 */
+/* v0.2 */
+/* - Constantes físicas correctas 
+   - Campo de punto cero apagado */
+/* TODO:
+	- Hacer más pruebas para escoger bien la omega_0
+*/
 /* Luis Gregorio Navarro Rodríguez */
 
 #include <stdio.h>
@@ -11,10 +17,11 @@
 
 // Variables de generación del campo
 double kappa,nu,phi,delta,bgamma,deltakappa,deltanu,deltaphi,random1,random2,random3,phase1,phase2;
-double thetai,ki,phii;
+double thetai,ki,phii,xi;
 float R;
 int i,j,n;
 double k[3],e1[3],e2[3];
+double omega;
 int N_k, N_n, N_p, N_o; //valores máximos de kappa,nu, phi y omega respectivamente
 //Variables de Runge-Kutta
 double k1[2], k2[2], k3[2], k4[2], k5[2], k6[2];
@@ -24,23 +31,26 @@ double D0;
 double D1[2],x,v,t,xn_1,vn_1,xs_1,vs_1,h;
 int n,i;
 double dxdt, dvdt, dydx[2];
+//Constantes físicas
+double c,e,m,hbar,epsilon_0;
 //Parámetros
-double E_const, omega_0,c,e,m;
+double E_const, omega_0,vol;
 double E_vaco, E_temp;
 //Variables de graficación, manejo y procesamiento de datos
 int histograma[200000];
 //Funciones
 double f(double ti, double xi, double vi, int n);
-double modos();
+double modos(int i);
 double E_vac(double tp);
-void derivs(float t,float y[],float dydx[]);
+double norma();
 
 /****************** Ecuación diferencial a resolver *****************/
 double f(double ti, double xi, double vi, int n) 
 {
-	double k=1; 
-	dxdt = vi;    		    // dx/dt = v
-	dvdt = -k*xi-0.1*vi+E_temp; // dv/dt = -kx-bv+E
+	//omega_0=1;
+	//bgamma=0.1;
+	dxdt = vi;    		  // dx/dt = v
+	dvdt = -omega_0*omega_0*xi-bgamma*omega_0*omega_0*vi;//+E_temp; // dv/dt = -kx-bv+E
 	
 	dydx[0] = dxdt;
 	dydx[1] = dvdt;
@@ -48,21 +58,28 @@ double f(double ti, double xi, double vi, int n)
 	return dydx[n];
 }
 
+double norma()
+{
+	return sqrt(k[0]*k[0]+k[1]*k[1]+k[2]*k[2]);
+}
+
 // Campo en la componente x
 double E_vac(double tp)
 {
 
-	modos();
-	E_vaco = E_const*(e1[0]*cos(omega_0*tp-phase1)+e2[0]*cos(omega_0*tp-phase2));
-	//printf("%f\n",E_vaco);
+	//modos(1);
+	omega=c*norma();
+	E_const=sqrt(hbar*omega/(epsilon_0*vol));
+	E_vaco = E_const*(e1[0]*cos(omega*tp-phase1)+e2[0]*cos(omega_0*tp-phase2));
+	//printf("%12e\n",E_vaco);
 	return E_vaco;
 }
 
-double modos()
+double modos(int i)
 {
-	  random1 = 2*(1)*(rand()/((double)RAND_MAX+1))-1;      // Entre -1 y 1
-	  random2 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));     // Entre 0 y 2Pi
-	  random3 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));     // Entre 0 y 2Pi
+	random1 = 2*(1)*(rand()/((double)RAND_MAX+1))-1;      // Entre -1 y 1
+	random2 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));     // Entre 0 y 2Pi
+	random3 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));     // Entre 0 y 2Pi
 
 // Debug
 /*
@@ -74,50 +91,60 @@ double modos()
 /******Generación de los modos del campo******/
 
 // Números para muestrear los modos k
-	  kappa=(pow((omega_0-delta/2),3))/(3*pow(c,3)) + (i-1)*deltakappa;
-	  nu = random1;
-	  phi =random2;
 
-	  ki = pow((3*kappa),(1/3));
-	  thetai = acos(nu);
-	  phii = phi;
+	deltakappa=(pow((omega_0+delta/2.0),3.0)/(3.0*pow(c,3.0))-pow((omega_0-delta/2.0),3.0)/(3.0*pow(c,3.0)))/(N_k-1);
+
+	kappa=(pow((omega_0-delta/2),3))/(3*pow(c,3)) + (i-1)*deltakappa;
+	nu = random1;
+	phi =random2;
+
+	ki = pow((3*kappa),(1/3));
+	thetai = acos(nu);
+	phii = phi;
 
 // Vector k
-	  k[0] = ki*sin(thetai)*cos(phii);
-	  k[1] = ki*sin(thetai)*sin(phii);
-	  k[2] = ki*cos(thetai);
+	k[0] = ki*sin(thetai)*cos(phii);
+	k[1] = ki*sin(thetai)*sin(phii);
+	k[2] = ki*cos(thetai);
 
-	  //printf("%f, %f, %f\n",k[0],k[1],k[2]);
+	//printf("%f, %f, %f\n",k[0],k[1],k[2]);
 
 
 // Polarizaciones
-	  double xi = random3;
+	xi = random3;
 
-	  e1[0] = cos(thetai)*cos(phii)*cos(xi) - sin(phii)*sin(xi);
-	  e1[1] = cos(thetai)*sin(phii)*cos(xi) + cos(phii)*sin(xi);
-	  e1[2] = -sin(thetai)*cos(xi);
+	e1[0] = cos(thetai)*cos(phii)*cos(xi) - sin(phii)*sin(xi);
+	e1[1] = cos(thetai)*sin(phii)*cos(xi) + cos(phii)*sin(xi);
+	e1[2] = -sin(thetai)*cos(xi);
 
-	  e2[0] = -cos(thetai)*cos(phii)*cos(xi) - sin(phii)*sin(xi);
-	  e2[1] = -cos(thetai)*sin(phii)*cos(xi) + cos(phii)*sin(xi);
-	  e2[2] = sin(thetai)*cos(xi);
+	e2[0] = -cos(thetai)*cos(phii)*cos(xi) - sin(phii)*sin(xi);
+	e2[1] = -cos(thetai)*sin(phii)*cos(xi) + cos(phii)*sin(xi);
+	e2[2] = sin(thetai)*cos(xi);
 
-	  double phase1 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));
-	  double phase2 = 2*(M_PI)*(rand()/((double)RAND_MAX+1)); 
+	phase1 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));
+	phase2 = 2*(M_PI)*(rand()/((double)RAND_MAX+1)); 
 }
 
 main()
 {
+// Constantes
+	e=1.6021E-19;
+	m=9.1093E-31;
+	c=2.9979E8;
+	hbar=1.0545E-34;
+	epsilon_0=8.8541E-12;
+	bgamma=(2.0*e*e/3.0*m*pow(c,3.0))*(1/4.0*M_PI*epsilon_0);
+	//printf("%12e\n",bgamma);
 // Parámetros
-	delta = 0.00001;
-	omega_0 = 1;
-	E_const = 1;
-	bgamma = 0;
-	m=0;
-	e=0;
+	omega_0=10000;
+	delta=0.000000001;
+	vol=0.0000001;
+	
 // Aleatorios
 	srand(time(NULL));
 	int contador = 1;
- 
+ 	
+	modos(1);
 
 /******Cash Sharp Runge-Kutta orden 5, paso variable******/
 
@@ -130,14 +157,14 @@ main()
 	//printf("c1:%f \n",c1);
 	double count=0;
 	t=0;
-	x=0;
-	v=1;
+	x=0.1;
+	v=0.0001;
 	E_temp=0;
 	//printf("%f\n",f(x,y));
-	double hinit=0.001;
+	double hinit=0.000001;
 	h=hinit;
 	D0=1.0/10e10; //Precisión asegurada hasta 10 dígitos
-	while(count<100000000) //Número de puntos por correr 
+	while(count<10000) //Número de puntos por correr 
 	{
 		//Correr pasos e ir adaptando hasta la precisión deseada
 		do
@@ -181,15 +208,16 @@ main()
 		//printf("%f\n", E_temp);
 		E_temp=E_vac(t);
 		/******Graficación de trayectorias y distribuciones******/
-		//printf("%.15f\n",x);
+		printf("%12e\n",x);
 		double index = (x+1)*100000.;
 		//printf("%d\n",(int)floor(index));
-		histograma[(int)floor(index)]=histograma[(int)floor(index)]+1;
+		//histograma[(int)floor(index)]=histograma[(int)floor(index)]+1;
 		//printf("tiempo:%f pos:%f vel:%f\n",t,x,v);
 		count++;
 	}
-	for(i=0;i<200000;i++)
-	  printf("%f, %d\n",i/100000.-1,histograma[i]);
-	
+	//for(i=0;i<200000;i++)
+	//	printf("%f, %d\n",i/100000.-1,histograma[i]);
+	//printf("%f\n",c);
+	//printf("%f\n",kappa);
 	return 0;
 }
