@@ -1,8 +1,9 @@
 /* Oscilador armónico bajo la radiación de Punto Cero */
 /* 15 Septiembre 2016 */
-/* v0.2.1 */
+/* v0.2.1.1 */
 /* - Parámetros según la tesis de Wayne 
-   - Campo de punto cero apagado */
+   - Campo de punto cero apagado 
+   - Corregido problema con la bgamma */
 
 /* Luis Gregorio Navarro Rodríguez */
 
@@ -142,7 +143,7 @@ main()
 	//printf("%12e\n",bgamma);
 // Parámetros
 	m=(10E-4)*m_e;
-	bgamma=(2.0*e*e/(3.0*m*pow(c,3.0)))*(1.0/4.0*M_PI*epsilon_0);
+	bgamma=(2.0*e*e/(3.0*m*pow(c,3.0)))*(1.0/(4.0*M_PI*epsilon_0));
 	omega_0=10E16;
 	delta=220*bgamma*omega_0*omega_0;
 	
