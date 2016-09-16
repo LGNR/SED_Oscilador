@@ -3,9 +3,7 @@
 /* v0.2.1 */
 /* - Parámetros según la tesis de Wayne 
    - Campo de punto cero apagado */
-/* TODO:
-	- Hacer más pruebas para escoger bien la omega_0
-*/
+
 /* Luis Gregorio Navarro Rodríguez */
 
 #include <stdio.h>
