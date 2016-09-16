@@ -1,7 +1,7 @@
 /* Oscilador armónico bajo la radiación de Punto Cero */
 /* 15 Septiembre 2016 */
-/* v0.2 */
-/* - Constantes físicas correctas 
+/* v0.2.1 */
+/* - Parámetros según la tesis de Wayne 
    - Campo de punto cero apagado */
 /* TODO:
 	- Hacer más pruebas para escoger bien la omega_0
@@ -14,15 +14,16 @@
 #include <stdlib.h>
 
 #define N 2
-
+#define N_k 500
 // Variables de generación del campo
 double kappa,nu,phi,delta,bgamma,deltakappa,deltanu,deltaphi,random1,random2,random3,phase1,phase2;
 double thetai,ki,phii,xi;
 float R;
 int i,j,n;
 double k[3],e1[3],e2[3];
+double modos_guardados[7][N_k];
 double omega;
-int N_k, N_n, N_p, N_o; //valores máximos de kappa,nu, phi y omega respectivamente
+//int N_k, N_n, N_p, N_o; //valores máximos de kappa,nu, phi y omega respectivamente
 //Variables de Runge-Kutta
 double k1[2], k2[2], k3[2], k4[2], k5[2], k6[2];
 double a2, a3, a4, a5, a6, b21, b31, b32, b41, b42, b43, b51, b52, b53, b54, b61, b62, b63, b64, b65, c1s, c2s, c3s, c4s, c5s, c6s;
@@ -32,9 +33,9 @@ double D1[2],x,v,t,xn_1,vn_1,xs_1,vs_1,h;
 int n,i;
 double dxdt, dvdt, dydx[2];
 //Constantes físicas
-double c,e,m,hbar,epsilon_0;
+double c,e,m_e,hbar,epsilon_0;
 //Parámetros
-double E_const, omega_0,vol;
+double E_const, omega_0,vol,V_k,m;
 double E_vaco, E_temp;
 //Variables de graficación, manejo y procesamiento de datos
 int histograma[200000];
@@ -50,7 +51,7 @@ double f(double ti, double xi, double vi, int n)
 	//omega_0=1;
 	//bgamma=0.1;
 	dxdt = vi;    		  // dx/dt = v
-	dvdt = -omega_0*omega_0*xi-bgamma*omega_0*omega_0*vi;//+E_temp; // dv/dt = -kx-bv+E
+	dvdt = -omega_0*omega_0*xi-bgamma*omega_0*omega_0*vi;//+(e/m)*E_temp; // dv/dt = -kx-bv+E
 	
 	dydx[0] = dxdt;
 	dydx[1] = dvdt;
@@ -58,19 +59,16 @@ double f(double ti, double xi, double vi, int n)
 	return dydx[n];
 }
 
-double norma()
-{
-	return sqrt(k[0]*k[0]+k[1]*k[1]+k[2]*k[2]);
-}
 
 // Campo en la componente x
 double E_vac(double tp)
 {
 
-	//modos(1);
-	omega=c*norma();
+	modos(1);
+	omega=c*ki;
+	//printf("%12e\n",omega);
 	E_const=sqrt(hbar*omega/(epsilon_0*vol));
-	E_vaco = E_const*(e1[0]*cos(omega*tp-phase1)+e2[0]*cos(omega_0*tp-phase2));
+	E_vaco = E_const*(e1[0]*cos(omega*tp-phase1)+e2[0]*cos(omega*tp-phase2));
 	//printf("%12e\n",E_vaco);
 	return E_vaco;
 }
@@ -123,28 +121,44 @@ double modos(int i)
 
 	phase1 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));
 	phase2 = 2*(M_PI)*(rand()/((double)RAND_MAX+1)); 
+
+	modos_guardados[0][i]=k[0];
+	modos_guardados[1][i]=k[1];
+	modos_guardados[2][i]=k[2];
+	modos_guardados[3][i]=e1[0];
+	modos_guardados[4][i]=e2[0];
+	modos_guardados[5][i]=phase1;
+	modos_guardados[6][i]=phase2;
 }
 
 main()
 {
-// Constantes
+// Constantes físicas
 	e=1.6021E-19;
-	m=9.1093E-31;
+	m_e=9.1093E-31;
 	c=2.9979E8;
 	hbar=1.0545E-34;
 	epsilon_0=8.8541E-12;
-	bgamma=(2.0*e*e/3.0*m*pow(c,3.0))*(1/4.0*M_PI*epsilon_0);
+	
+	
 	//printf("%12e\n",bgamma);
 // Parámetros
-	omega_0=10000;
-	delta=0.000000001;
-	vol=0.0000001;
+	m=(10E-4)*m_e;
+	bgamma=(2.0*e*e/(3.0*m*pow(c,3.0)))*(1.0/4.0*M_PI*epsilon_0);
+	omega_0=10E16;
+	delta=220*bgamma*omega_0*omega_0;
 	
+	V_k=4*M_PI*pow(omega_0,4.0)*bgamma/pow(c,3.0);
+	vol=pow(2.0*M_PI,3.0)*(N_k/V_k);
+
+	//printf("%12e\n",bgamma*omega_0);
+	//printf("%12e\n",V_k);
+	//printf("%12e\n",vol);
 // Aleatorios
 	srand(time(NULL));
 	int contador = 1;
- 	
-	modos(1);
+ 			
+	
 
 /******Cash Sharp Runge-Kutta orden 5, paso variable******/
 
@@ -157,16 +171,18 @@ main()
 	//printf("c1:%f \n",c1);
 	double count=0;
 	t=0;
-	x=0.1;
-	v=0.0001;
+	x=0;
+	v=0.01;
 	E_temp=0;
 	//printf("%f\n",f(x,y));
-	double hinit=0.000001;
+	double hinit=0.1*(1.0/20.0)*(2.0*M_PI/omega_0);
 	h=hinit;
+	//printf("%12e\n",h);
 	D0=1.0/10e10; //Precisión asegurada hasta 10 dígitos
 	while(count<10000) //Número de puntos por correr 
 	{
 		//Correr pasos e ir adaptando hasta la precisión deseada
+		E_temp=E_vac(t);
 		do
 		{
 		
@@ -206,9 +222,10 @@ main()
 		t=t+h;
 		h=hinit;
 		//printf("%f\n", E_temp);
-		E_temp=E_vac(t);
 		/******Graficación de trayectorias y distribuciones******/
 		printf("%12e\n",x);
+		//printf("x:%12e v:%12e\n",x,v);
+		//printf("omega_0^2*x:%12e bgamma*omega_0^2*v:%12e (e/m)*E_temp:%12e\n",omega_0*omega_0*x, bgamma*omega_0*omega_0*v,(e/m)*E_temp);
 		double index = (x+1)*100000.;
 		//printf("%d\n",(int)floor(index));
 		//histograma[(int)floor(index)]=histograma[(int)floor(index)]+1;
@@ -219,5 +236,6 @@ main()
 	//	printf("%f, %d\n",i/100000.-1,histograma[i]);
 	//printf("%f\n",c);
 	//printf("%f\n",kappa);
+	//printf("%12e\n",bgamma);
 	return 0;
 }

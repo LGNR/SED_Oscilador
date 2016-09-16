@@ -113,6 +113,8 @@ double modos(int i)
 	e2[1] = -cos(thetai)*sin(phii)*cos(xi) + cos(phii)*sin(xi);
 	e2[2] = sin(thetai)*cos(xi);
 
+	printf("%12e, %12e, %12e\n",e1[0],e1[1],e1[2]);	
+
 	phase1 = 2*(M_PI)*(rand()/((double)RAND_MAX+1));
 	phase2 = 2*(M_PI)*(rand()/((double)RAND_MAX+1)); 
 }
@@ -125,8 +127,9 @@ int main()
 	epsilon_0=8.8541E-12;
 	bgamma=(2.0*e*e/3.0*m*pow(c,3.0))*(1/4.0*M_PI*epsilon_0);
 	// Debe cubrirse la resonancia característica completa: bgamma*omega_0^2 << delta 
-	omega_0=0.0001;
-	delta=0.000000001;
+	omega_0=10E16;
+	delta=220*bgamma*omega_0*omega_0;
+	N_k=3000;
 	if (debug==1)
 	{
 	printf("bgamma:%12e\n",bgamma);
@@ -135,10 +138,10 @@ int main()
 	
 	debug=0;
 	
-	for(j=1;j<=500;j++)
+	for(j=1;j<=N_k;j++)
 	{		
 		modos(j);
-		printf("ki:%12e\n",ki);
+		//printf("ki:%12e\n",ki);
 	}
 	
 	return 0;	
