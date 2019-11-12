@@ -1,4 +1,4 @@
-# SED_Oscilador
+# Oscilaor electrodiámica estocástica
 
 Solución numérica RKCK al scilador armónico unidimensional con campo de punto cero
 
