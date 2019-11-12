@@ -1,4 +1,4 @@
-# Oscilaor electrodiámica estocástica
+# Oscilador electrodiámica estocástica
 
 Solución numérica RKCK al scilador armónico unidimensional con campo de punto cero
 
